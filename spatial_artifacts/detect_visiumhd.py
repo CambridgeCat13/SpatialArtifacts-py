@@ -240,7 +240,8 @@ def detect_edge_artifacts_visiumhd(
     if verbose:
         print("\n--- STEP 3: Interior Problem Area Detection ---")
 
-    adata.obs[f"{name}_problem_id"] = np.nan
+    adata.obs[f"{name}_problem_id"] = pd.NA
+    adata.obs[f"{name}_problem_id"] = adata.obs[f"{name}_problem_id"].astype("object")
     adata.obs[f"{name}_problem_size"] = 0
 
     all_problem_dfs = []
