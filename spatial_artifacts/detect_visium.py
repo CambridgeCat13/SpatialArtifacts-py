@@ -83,7 +83,8 @@ def detect_edge_artifacts_visium(
 
     # Initialize output columns
     adata.obs[f"{name}_edge"] = False
-    adata.obs[f"{name}_problem_id"] = np.nan
+    adata.obs[f"{name}_problem_id"] = pd.NA
+    adata.obs[f"{name}_problem_id"] = adata.obs[f"{name}_problem_id"].astype("object")
     adata.obs[f"{name}_problem_size"] = 0
 
     if verbose:
