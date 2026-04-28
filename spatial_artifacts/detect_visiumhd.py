@@ -51,7 +51,6 @@ def _problem_areas_visiumhd(xyz_df, unique_identifier=None, min_cluster_size=5):
         grid[ri, ci] = float(o)
 
     processed = focal_transformations(grid, min_cluster_size=min_cluster_size)
-
     binary = np.where(np.isnan(processed), 0, processed).astype(int)
     labeled, num_features = label(binary, structure=np.ones((3, 3)))
 
@@ -190,6 +189,7 @@ def detect_edge_artifacts_visiumhd(
         print("\n--- STEP 1: Outlier Detection ---")
 
     values = obs[qc_metric].values
+
     in_tissue = obs[in_tissue_col].values.astype(bool) if in_tissue_col in obs else None
 
     outlier_binary_col = f"{name}_outlier_binary"

@@ -117,6 +117,7 @@ def clump_edges(xyz_df, off_tissue, outlier_col,
     grid, row_offset, col_offset, key_grid, spot_index = _coords_to_grid(xyz_df, outlier_col)
 
     processed = focal_transformations(grid, min_cluster_size=min_cluster_size)
+    processed = np.where(np.isnan(grid), np.nan, processed)
 
     binary = np.where(np.isnan(processed), 0, processed).astype(int)
     labeled, num_features = label(binary, structure=np.ones((3, 3)))
@@ -125,30 +126,34 @@ def clump_edges(xyz_df, off_tissue, outlier_col,
         return []
 
     # Replace 0 with nan for coverage calculation
-    rast = np.where(grid == 0, np.nan, grid)
+    rast = np.where(np.isnan(grid), np.nan, 1.0)
     clumps = labeled.astype(float)
     clumps[labeled == 0] = np.nan
 
     edge_clumps = set()
 
-    # Method 1: coverage-based (large continuous edges)
-    for border_slice, rast_slice in [
-        (clumps[0, :],        rast[0, :]),         # north
-        (clumps[-1, :],       rast[-1, :]),         # south
-        (clumps[:, 0],        rast[:, 0]),          # west
-        (clumps[:, -1],       rast[:, -1]),         # east
+    # Method 1: coverage-based
+    for border_slice, rast_slice, border_size in [
+        (clumps[0, :],   rast[0, :],   grid.shape[1]),
+        (clumps[-1, :],  rast[-1, :],  grid.shape[1]),
+        (clumps[:, 0],   rast[:, 0],   grid.shape[0]),
+        (clumps[:, -1],  rast[:, -1],  grid.shape[0]),
     ]:
-        total = np.sum(~np.isnan(rast_slice))
-        if total > 0:
-            coverage = np.sum(~np.isnan(border_slice)) / total
-            if coverage >= edge_threshold:
-                edge_clumps.update(
-                    int(v) for v in border_slice[~np.isnan(border_slice)]
-                )
+        total = border_size
+        if total == 0:
+            continue
+        coverage = np.sum(~np.isnan(border_slice)) / total
+        if coverage >= edge_threshold:
+            edge_clumps.update(
+                int(v) for v in border_slice[~np.isnan(border_slice)]
+            )
 
-    # Method 2: any cluster touching edge
+    # Method 2: ANY cluster touching edge
     for border_slice in [
-        clumps[0, :], clumps[-1, :], clumps[:, 0], clumps[:, -1]
+        clumps[0, :],
+        clumps[-1, :],
+        clumps[:, 0],
+        clumps[:, -1],
     ]:
         edge_clumps.update(
             int(v) for v in border_slice[~np.isnan(border_slice)]
@@ -156,7 +161,6 @@ def clump_edges(xyz_df, off_tissue, outlier_col,
 
     if not edge_clumps:
         return []
-
     indices_rc = []
     for clump_id in edge_clumps:
         positions = np.argwhere(labeled == clump_id)
@@ -215,7 +219,7 @@ def problem_areas(xyz_df, off_tissue, outlier_col,
     grid, row_offset, col_offset, key_grid, spot_index = _coords_to_grid(xyz_df, outlier_col)
 
     processed = focal_transformations(grid, min_cluster_size=min_cluster_size)
-
+    processed = np.where(np.isnan(grid), np.nan, processed)
     binary = np.where(np.isnan(processed), 0, processed).astype(int)
     labeled, num_features = label(binary, structure=np.ones((3, 3)))
 

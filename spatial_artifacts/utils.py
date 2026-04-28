@@ -54,11 +54,10 @@ def is_outlier(values, subset=None, batch=None, nmads=3, log=True):
             continue
 
         batch_vals = transformed[use_mask]
-        median_val = np.median(batch_vals)
-        mad_val = np.median(np.abs(batch_vals - median_val))
+        median_val = np.nanmedian(batch_vals)
+        mad_val = np.nanmedian(np.abs(batch_vals - median_val)) * 1.4826
 
         threshold = median_val - nmads * mad_val
-
         outlier_flags[batch_mask] = transformed[batch_mask] < threshold
 
     return outlier_flags

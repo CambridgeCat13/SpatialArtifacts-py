@@ -14,8 +14,7 @@ def _my_fill(x):
         return np.nan
     if center == 1:
         return 1.0
-    neighbors = np.copy(x)
-    neighbors[4] = np.nan
+    neighbors = np.concatenate([x[:4], x[5:]]) 
     neighbors = np.where(np.isnan(neighbors), 1.0, neighbors)
     if np.sum(neighbors) == 8:
         return 1.0
@@ -79,21 +78,26 @@ def focal_transformations(grid, min_cluster_size=40):
     np.ndarray
         Processed 2D array with cleaned and connected outlier regions.
     """
+    grid_filled = np.where(np.isnan(grid), 0.0, grid)
+    
     # Step 1: 3x3 fill
-    r2 = generic_filter(grid, _my_fill, size=3, mode="constant", cval=1.0)
-
+    r2 = generic_filter(grid_filled, _my_fill, size=3, mode="constant", cval=1.0)
+    r2 = np.where(np.isnan(grid), np.nan, r2)
+    r2_filled = np.where(np.isnan(r2), 0.0, r2)
+    
     # Step 2: 5x5 outline
-    r3 = generic_filter(r2, _my_outline, size=5, mode="constant", cval=1.0)
+    r3 = generic_filter(r2_filled, _my_outline, size=5, mode="constant", cval=1.0)
+    r3 = np.where(np.isnan(grid), np.nan, r3)
+    r3_filled = np.where(np.isnan(r3), 0.0, r3)
+    
+    # Step 3: star pattern
+    r3_s = generic_filter(r3_filled, _my_fill_star, size=3, mode="constant", cval=1.0)
+    r3_s = np.where(np.isnan(grid), np.nan, r3_s)
 
-    # Step 3: star pattern (3x3 but only cardinal directions)
-    r3_s = generic_filter(r3, _my_fill_star, size=3, mode="constant", cval=1.0)
-
-    # Step 4: remove small holes in the outlier region
-    # Invert: find connected components of non-outlier areas
+    # Step 4: remove small holes
     rev = np.where(r3_s == 1, 0.0, 1.0)
-    rev = np.where(np.isnan(r3_s), np.nan, rev)
-
-    rev_binary = np.where(np.isnan(rev), 0, rev).astype(int)
+    rev = np.where(np.isnan(r3_s), 1.0, rev) 
+    rev_binary = rev.astype(int)
     labeled, num_features = label(rev_binary, structure=np.ones((3, 3)))
 
     if num_features > 0:
