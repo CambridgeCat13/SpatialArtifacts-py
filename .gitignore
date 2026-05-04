@@ -216,3 +216,11 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+
+# Project-specific
+test_mock.py
+test_real_data.py
+test_visiumhd.py
+visiumhd_obs_full.csv
+visiumhd_obs.csv
+*.png

@@ -1,0 +1,6 @@
+exclude test_mock.py
+exclude test_real_data.py
+exclude test_visiumhd.py
+exclude visiumhd_obs_full.csv
+exclude visiumhd_obs.csv
+global-exclude *.png
